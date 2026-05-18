@@ -1,0 +1,6 @@
+{
+  "name": "Glitch",
+  "description": "A curated collection of high-quality unblocked web games with a premium glitch-aesthetic interface.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
