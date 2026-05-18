@@ -107,31 +107,8 @@ export default function App() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-900 pb-12">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <h2 className="text-5xl font-black italic tracking-tighter text-white uppercase">Sector: Library</h2>
+                    <h2 className="text-5xl font-black italic tracking-tighter text-white uppercase">Game Library</h2>
                     <p className="text-zinc-500 font-mono text-xs uppercase italic tracking-widest">{">> "} Viewing Available Terminals</p>
-                  </div>
-                  
-                  {/* Category Tabs */}
-                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2">
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        key={cat.name}
-                        onClick={() => setActiveCategory(cat.name)}
-                        className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase italic transition-all whitespace-nowrap border ${
-                          activeCategory === cat.name 
-                            ? 'bg-game-accent text-black border-game-accent shadow-[0_0_15px_rgba(34,197,94,0.2)]' 
-                            : 'bg-zinc-900/50 text-zinc-500 border-zinc-800 hover:text-white hover:border-zinc-700'
-                        }`}
-                      >
-                        {cat.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="px-4 py-2 bg-zinc-900/50 border border-zinc-800 rounded-xl flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-game-accent animate-ping"></div>
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Node: Active</span>
                   </div>
                 </div>
               </div>
