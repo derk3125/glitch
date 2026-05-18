@@ -18,13 +18,12 @@ import {
   Play,
   Info,
   Home,
-  Globe,
   LayoutGrid
 } from 'lucide-react';
 import { Game, GAMES, CATEGORIES } from './data/games';
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'games' | 'browser'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'games'>('home');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,12 +36,6 @@ export default function App() {
   const handleGameSelect = (game: Game) => {
     setSelectedGame(game);
     setCurrentView('games'); 
-  };
-
-  const handleSearchSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setCommittedSearchQuery(searchQuery);
-    setCurrentView('browser');
   };
 
   return (
@@ -79,22 +72,19 @@ export default function App() {
               System Online // Connection Pending
             </motion.p>
             
-            <form 
-              onSubmit={handleSearchSubmit}
-              className="mt-8 relative w-full max-w-sm mx-auto group"
-            >
+            <div className="mt-8 relative w-full max-w-sm mx-auto group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-game-accent transition-colors" size={18} />
               <input
                 type="text"
                 name="q"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search Terminal..."
+                placeholder="Search..."
                 className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl py-3 pl-12 pr-4 outline-none focus:border-game-accent/50 focus:ring-1 focus:ring-game-accent/50 transition-all text-sm text-white font-mono uppercase italic group-hover:border-zinc-700"
               />
-            </form>
+            </div>
           </motion.main>
-        ) : currentView === 'games' ? (
+        ) : (
           <motion.main 
             key="games"
             initial={{ opacity: 0, y: 20 }}
@@ -208,51 +198,6 @@ export default function App() {
               )}
             </div>
           </motion.main>
-        ) : (
-          <motion.main 
-            key="browser"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="relative z-10 w-full h-screen pl-20"
-          >
-            <div className="w-full h-full flex flex-col bg-zinc-950">
-              <div className="h-14 border-b border-zinc-900 flex items-center px-6 justify-between bg-zinc-900/20 backdrop-blur-md">
-                <div className="flex items-center gap-4">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/40"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/40"></div>
-                  </div>
-                  <form 
-                    onSubmit={handleSearchSubmit}
-                    className="h-8 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center px-4 gap-3 min-w-[400px] cursor-text focus-within:border-game-accent/50 transition-colors"
-                  >
-                    <Globe size={14} className="text-zinc-500" />
-                    <input 
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search or enter URL..."
-                      className="bg-transparent border-none outline-none text-xs text-zinc-300 font-mono italic w-full placeholder:text-zinc-600"
-                    />
-                  </form>
-                </div>
-                <div className="flex items-center gap-3 pr-8">
-                  <div className="w-2 h-2 rounded-full bg-game-accent animate-pulse"></div>
-                  <span className="text-[10px] font-black uppercase text-zinc-600 tracking-widest italic">Connection Secure</span>
-                </div>
-              </div>
-              <div className="flex-1 relative">
-                <iframe 
-                  src={committedSearchQuery ? `https://duckduckgo.com/?q=${encodeURIComponent(committedSearchQuery)}&t=h_&ia=web` : `https://duckduckgo.com`} 
-                  className="w-full h-full border-none"
-                  title="Web Browser"
-                />
-                <div className="scanline pointer-events-none opacity-10"></div>
-              </div>
-            </div>
-          </motion.main>
         )}
       </AnimatePresence>
 
@@ -272,25 +217,6 @@ export default function App() {
               currentView === 'home' ? 'bg-white text-black' : 'bg-zinc-900 border border-zinc-800 text-zinc-500'
             }`}>
               <Home size={24} />
-            </div>
-          </motion.div>
-
-          <motion.div 
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => {
-              setCurrentView('browser');
-              setSelectedGame(null);
-            }}
-            className="group cursor-pointer relative"
-          >
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-lg ${
-              currentView === 'browser' ? 'bg-game-accent text-black' : 'bg-zinc-900 border border-zinc-800 text-zinc-500'
-            }`}>
-              <Globe size={24} />
-            </div>
-            <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-3 py-1 bg-game-accent text-black text-[10px] font-black uppercase italic rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none tracking-widest whitespace-nowrap">
-              Web Browser
             </div>
           </motion.div>
 
