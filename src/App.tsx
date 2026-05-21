@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo, FormEvent } from 'react';
+import { useState, useMemo, FormEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Gamepad2, 
@@ -13,6 +13,7 @@ import {
   ExternalLink,
   ChevronLeft, 
   Maximize2,
+  Minimize2,
   Share2,
   MoreVertical,
   Play,
@@ -29,6 +30,10 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [committedSearchQuery, setCommittedSearchQuery] = useState('');
 
+  const [isVirtualFullscreen, setIsVirtualFullscreen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
   const filteredGames = useMemo(() => {
     return GAMES.filter(game => activeCategory === 'All' || game.category === activeCategory);
   }, [activeCategory]);
@@ -37,6 +42,86 @@ export default function App() {
     setSelectedGame(game);
     setCurrentView('games'); 
   };
+
+  const triggerToast = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 2500);
+  };
+
+  const handleShare = () => {
+    if (!selectedGame) return;
+    const shareUrl = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: `Play ${selectedGame.title} on Glitch`,
+        text: selectedGame.description,
+        url: shareUrl,
+      })
+      .then(() => triggerToast("Shared successfully!"))
+      .catch(() => {});
+    } else {
+      navigator.clipboard.writeText(shareUrl)
+        .then(() => triggerToast("Link copied to clipboard!"))
+        .catch(() => triggerToast("Failed to copy link"));
+    }
+  };
+
+  const toggleFullscreen = () => {
+    const container = document.getElementById('game-player-container');
+    if (!container) return;
+
+    if (!isVirtualFullscreen) {
+      setIsVirtualFullscreen(true);
+      if (container.requestFullscreen) {
+        container.requestFullscreen().catch(() => {
+          console.log("Native fullscreen blocked, using virtual fullscreen fallback.");
+        });
+      } else if ((container as any).webkitRequestFullscreen) {
+        (container as any).webkitRequestFullscreen();
+      }
+    } else {
+      setIsVirtualFullscreen(false);
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && !(document as any).webkitIsFullScreen && !(document as any).mozFullScreen && !(document as any).msFullscreenElement) {
+        setIsVirtualFullscreen(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsVirtualFullscreen(false);
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <div id="glitch-root" className="min-h-screen bg-game-bg font-sans flex flex-col items-center justify-center relative overflow-hidden">
@@ -105,29 +190,79 @@ export default function App() {
 
               {selectedGame ? (
                 /* Player View */
-                <div className="space-y-8">
+                <div className="space-y-8 animate-fadeIn">
                   <div className="flex items-center justify-between">
                     <button 
-                      onClick={() => setSelectedGame(null)}
+                      onClick={() => {
+                        setSelectedGame(null);
+                        setIsVirtualFullscreen(false);
+                      }}
                       className="flex items-center gap-2 text-zinc-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
                     >
                       <ChevronLeft size={16} /> Exit App
                     </button>
                     <div className="flex gap-4">
-                      <button className="p-2 bg-zinc-900/50 border border-zinc-800 rounded-lg text-zinc-500 hover:text-game-accent transition-colors"><Maximize2 size={18} /></button>
-                      <button className="p-2 bg-zinc-900/50 border border-zinc-800 rounded-lg text-zinc-500 hover:text-game-accent transition-colors"><Share2 size={18} /></button>
+                      <button 
+                        onClick={toggleFullscreen}
+                        title="Toggle Fullscreen"
+                        className="p-2 bg-zinc-900/50 border border-zinc-800 rounded-lg text-zinc-500 hover:text-game-accent transition-all active:scale-95 duration-200"
+                      >
+                        {isVirtualFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                      </button>
+                      <button 
+                        onClick={handleShare}
+                        title="Share Module"
+                        className="p-2 bg-zinc-900/50 border border-zinc-800 rounded-lg text-zinc-500 hover:text-game-accent transition-all active:scale-95 duration-200"
+                      >
+                        <Share2 size={18} />
+                      </button>
                     </div>
                   </div>
                   
-                  <div className="relative aspect-video bg-black rounded-3xl overflow-hidden border border-zinc-800 shadow-2xl group">
+                  <div 
+                    id="game-player-container"
+                    className={
+                      isVirtualFullscreen 
+                        ? "fixed inset-0 bg-black z-[100] flex flex-col w-screen h-screen m-0 p-0 rounded-none border-none overflow-hidden" 
+                        : "relative aspect-video bg-black rounded-3xl overflow-hidden border border-zinc-800 shadow-2xl group"
+                    }
+                  >
                     <iframe 
                       src={selectedGame.embedUrl} 
-                      className="w-full h-full border-none"
+                      className="w-full h-full border-none flex-1 bg-black"
                       title={selectedGame.title}
-                      allow="accelerometer; gyroscope; autoplay; payment; fullscreen; microphone; clipboard-read; clipboard-write"
+                      allow="accelerometer; gyroscope; autoplay; payment; fullscreen; microphone; clipboard-read; clipboard-write; display-capture"
                       sandbox="allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-presentation allow-scripts allow-same-origin allow-downloads allow-popups-to-escape-sandbox"
                     />
                     <div className="scanline pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity"></div>
+
+                    {/* Immersive Controls for Virtual Fullscreen Mode */}
+                    {isVirtualFullscreen && (
+                      <div className="absolute top-6 left-6 right-6 z-[101] flex justify-between items-center opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        <button 
+                          onClick={toggleFullscreen}
+                          className="pointer-events-auto flex items-center gap-2 px-4 py-2 bg-zinc-950/95 border border-zinc-800 hover:border-zinc-750 hover:text-white rounded-xl text-zinc-400 transition-all text-xs font-medium uppercase tracking-widest shadow-2xl"
+                        >
+                          <ChevronLeft size={14} /> Exit Fullscreen
+                        </button>
+                        <div className="pointer-events-auto flex gap-3">
+                          <button 
+                            onClick={handleShare}
+                            title="Share"
+                            className="p-2.5 bg-zinc-950/95 border border-zinc-800 hover:border-zinc-750 hover:text-white rounded-xl text-zinc-400 transition-all shadow-2xl"
+                          >
+                            <Share2 size={14} />
+                          </button>
+                          <button 
+                            onClick={toggleFullscreen}
+                            title="Exit Fullscreen"
+                            className="p-2.5 bg-zinc-950/95 border border-zinc-800 hover:border-zinc-750 hover:text-white rounded-xl text-zinc-400 transition-all shadow-2xl"
+                          >
+                            <Minimize2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-6">
@@ -169,6 +304,7 @@ export default function App() {
                         <img 
                           src={game.thumbnail} 
                           alt={game.title}
+                          referrerPolicy="no-referrer"
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-100"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent"></div>
@@ -249,6 +385,21 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Toast Notification Container */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div 
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[99999] px-6 py-3 bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl text-white text-xs font-mono flex items-center gap-3 select-none"
+          >
+            <div className="w-2.5 h-2.5 rounded-full bg-game-accent animate-ping duration-1000"></div>
+            <span className="tracking-wide text-zinc-300">{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

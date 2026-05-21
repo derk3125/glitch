@@ -1,4 +1,5 @@
 import { LayoutGrid, Zap } from 'lucide-react';
+import craftBlockImg from '../assets/images/craft_block_1779327588081.png';
 
 export interface Game {
   id: string;
@@ -16,7 +17,7 @@ export const GAMES: Game[] = [
     id: '2d-craft',
     title: '2D Craft',
     description: 'Explore, build, and survive in this blocky decentralized dimension. Craft your reality.',
-    thumbnail: 'https://images.unsplash.com/photo-1627389955609-70111d3d6390?q=80&w=800&h=600&auto=format&fit=crop',
+    thumbnail: craftBlockImg,
     embedUrl: 'https://turbowarp.org/10128407/embed?autoplay=&addons=remove-curved-stage-border%2Cpause%2Cgamepad&isFirstSession=true',
     category: 'Arcade',
     rating: 4.9,
